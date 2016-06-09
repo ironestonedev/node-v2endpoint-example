@@ -1,3 +1,8 @@
+// Add your app's registration data here
+var client_id = '';
+var client_secret = '';
+/// 
+
 var express = require('express');
 var session = require('express-session')
 var request = require('request');
@@ -13,14 +18,10 @@ var auth_uri = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
 var token_uri = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 var redirect_uri = 'http://localhost:3000/returned';
 
-// Define the client id, secret and scope
-var client_id = 'fc9a6fcf-bcd0-451c-9641-12ca455b9a34';
-var client_secret = 'tXVebOX8jdhgv5i6HN9Ep9w';
-
 // Define scopes
 // NOTE: You must request offline_access in order to recieve a refresh_token. Without it the
 // the autorization will only live for a limited time (typically 1 hour).
-var client_scopes = 'https://graph.microsoft.com/User.Read offline_access openid';
+var client_scopes = 'https://graph.microsoft.com/User.Read offline_access';
 
 
 // Forms
