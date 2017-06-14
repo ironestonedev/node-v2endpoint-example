@@ -1,6 +1,6 @@
 // Add your app's registration data here
-const client_id = '';
-const client_secret = '';
+const client_id = '30004c22-c36d-492a-8835-24c3e584d692';
+const client_secret = 'ZuhrNN3xYHM3arBeh1ookTk';
 
 const graph = require("@microsoft/microsoft-graph-client");
 const express = require('express');
@@ -19,13 +19,14 @@ app.use(session({
 // Define the various URIs we need
 var auth_uri = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
 var token_uri = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+var admin_uri = 'https://login.microsoftonline.com/common/adminconsent';
 var redirect_uri = 'http://localhost:3000/returned';
+var admin_redirect_uri = 'http://localhost:3000/consentReturn';
 
 // Define scopes
 // NOTE: You must request offline_access in order to recieve a refresh_token. Without it the
 // the autorization will only live for a limited time (typically 1 hour).
-var client_scopes = 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access';
-
+var client_scopes = 'User.Read Mail.Read User.Read.All offline_access';
 
 // Forms
 // There are two forms we post to the v2 endpoint, one to request the initial token and another 
@@ -56,7 +57,8 @@ var refresh_token_request = {
 app.get('/', function(req, res) {
     var codegrant_endpoint = auth_uri + '?client_id=' + client_id + '&response_type=code&redirect_uri=' + redirect_uri + '&scope=' + client_scopes;
     var implicit_endpoint = auth_uri + '?client_id=' + client_id + '&response_type=token&redirect_uri=' + redirect_uri + '&scope=' + client_scopes;
-    res.send('<div><a href="' + codegrant_endpoint + '" target="_blank">Code Grant Workflow</a></div><div><a href="' + implicit_endpoint + '" target="_blank">Implicit Grant Workflow</a></div>');
+    var admin_endpoint = admin_uri + '?client_id=' + client_id + '&admin_redirect_uri=' + redirect_uri;
+    res.send('<div><a href="' + codegrant_endpoint + '" target="_blank">Code Grant Workflow</a></div><div><a href="' + implicit_endpoint + '" target="_blank">Implicit Grant Workflow</a></div><div><a href="' + admin_endpoint + '" target="_blank">Admin Consent Workflow</a></div>');
 });
 
 
@@ -90,8 +92,17 @@ app.get('/implicit', function(req, res) {
 // we can use to call the API. We also return a link to refresh this token 
 // when it expires.
 app.get('/returned', function(req, res) {
-
-    if (req.query.code != null) {
+    if(req.query.error != null)
+    {        
+        var content = "<p>";
+        content += req.query.error;
+        content += "</p>";
+        content += "<p>";
+        content += req.query.error_description;
+        content += "</p>";
+        res.end(content)
+    }
+    else if (req.query.code != null) {
         // This is an OAUTH Code Grant workflow
 
         // Grab the auth code from the query params
@@ -152,6 +163,27 @@ app.get('/refresh', function(req, res) {
         content += '<a href="/refresh?code=' + result.refresh_token + '" target="_blank">Refresh Token</a>'
         res.end(content)
     })
+});
+
+// This is where we convert the refresh token into a usable 
+// brearer token we can use for API calls. 
+app.get('/consentReturn', function(req, res) {
+
+    if(req.query.error != null)
+    {        
+        var content = "<p>";
+        content += req.query.error;
+        content += "</p>";
+        content += "<p>";
+        content += req.query.error_description;
+        content += "</p>";
+        res.end(content)
+    }
+
+    var codegrant_endpoint = auth_uri + '?client_id=' + client_id + '&response_type=code&redirect_uri=' + redirect_uri + '&scope=' + client_scopes;
+    var implicit_endpoint = auth_uri + '?client_id=' + client_id + '&response_type=token&redirect_uri=' + redirect_uri + '&scope=' + client_scopes;
+    var admin_endpoint = admin_uri + '?client_id=' + client_id + '&redirect_uri=' + redirect_uri + '&scope=' + client_scopes;
+    res.send('<div>Consent Completed</div><div><a href="' + codegrant_endpoint + '" target="_blank">Code Grant Workflow</a></div><div><a href="' + implicit_endpoint + '" target="_blank">Implicit Grant Workflow</a></div><div><a href="' + admin_endpoint + '" target="_blank">Admin Consent Workflow</a></div>');
 });
 
 function getProfile(access_token, callback) {
